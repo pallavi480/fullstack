@@ -4,19 +4,18 @@ import connectDB from "./config/db.js";
 import productRouter from "./routes/ProductRoutes.js";
 import cors from "cors";
 
-
 dotenv.config();
 
-const app = express()
+const app = express();
 const PORT = process.env.PORT || 5000;
-app.use(express.json())
+
+app.use(cors());            
+app.use(express.json()); 
+
 connectDB();
 
-app.use("/api/products", productRouter);
-app.use(cors());
+app.use("/api/products", productRouter); 
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  
-})
-
+});
