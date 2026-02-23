@@ -13,7 +13,7 @@ const ProductForm = () => {
         try {
               e.preventDefault();
               await axios.post(
-                "http://localhost:5000/api/product/create",
+                "http://localhost:5000/api/products/create",
                 product
               );
               alert("Product added")
