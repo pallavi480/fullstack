@@ -4,7 +4,6 @@ import axios from "axios";
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [editID, setEditId] = useState(null);
-  const [search, setSearch] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -12,33 +11,57 @@ const ProductList = () => {
     description: "",
   });
 
-  // ✅ Fetch Products
-  const fetchProduct = async () => {
+  
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/products/all");
+        setProducts(res.data);
+      } catch (error) {
+        console.log("Fetch Error:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+ 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  
+  const addProduct = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/products/all"
+      const res = await axios.post(
+        "http://localhost:5000/api/products/create",
+        form
       );
 
-      console.log("DATA:", res.data); // Debug
-      setProducts(res.data);
+     
+      setProducts([...products, res.data]);
+
+      setForm({ name: "", price: "", description: "" });
     } catch (error) {
-      console.log("Fetch Error:", error);
+      console.log("Add Error:", error);
     }
   };
 
-  // ✅ Delete Product
-  const deletefun = async (id) => {
+ 
+  const deleteProduct = async (id) => {
     try {
       await axios.delete(
         `http://localhost:5000/api/products/delete/${id}`
       );
-      fetchProduct(); // Auto refresh
+
+    
+      setProducts(products.filter((p) => p._id !== id));
     } catch (error) {
       console.log("Delete Error:", error);
     }
   };
 
-  // ✅ Edit Click
+  
   const handleEdit = (product) => {
     setEditId(product._id);
     setForm({
@@ -48,12 +71,7 @@ const ProductList = () => {
     });
   };
 
-  // ✅ Input Change
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
-  // ✅ Update Product
   const updateProduct = async () => {
     try {
       await axios.put(
@@ -61,89 +79,74 @@ const ProductList = () => {
         form
       );
 
-      setEditId(null);
-      setForm({
-        name: "",
-        price: "",
-        description: "",
-      });
+      setProducts(
+        products.map((p) =>
+          p._id === editID ? { ...p, ...form } : p
+        )
+      );
 
-      fetchProduct(); // Auto refresh
+      setEditId(null);
+      setForm({ name: "", price: "", description: "" });
     } catch (error) {
       console.log("Update Error:", error);
     }
   };
 
-  useEffect(() => {
-    fetchProduct();
-  }, []);
-
-  // ✅ Live Search Filter
-  const filteredProducts = search
-    ? products.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase())
-      )
-    : products;
-
   return (
     <div style={{ padding: "20px" }}>
       <h2>Products</h2>
 
-      {/* 🔍 Search Box */}
-      <input
-        type="text"
-        placeholder="Search Product"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: "20px" }}
-      />
+      
+      <div style={{ marginBottom: "20px" }}>
+        <input
+          name="name"
+          type="text"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
 
-      {/* ✏ Edit Section */}
-      {editID && (
-        <div style={{ marginBottom: "20px" }}>
-          <h3>Edit Product</h3>
+        <input
+          name="price"
+          type="number"
+          value={form.price}
+          onChange={handleChange}
+          placeholder="Price"
+        />
 
-          <input
-            name="name"
-            type="text"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Name"
-          />
+        <input
+          name="description"
+          type="text"
+          value={form.description}
+          onChange={handleChange}
+          placeholder="Description"
+        />
 
-          <input
-            name="price"
-            type="number"
-            value={form.price}
-            onChange={handleChange}
-            placeholder="Price"
-          />
+        {editID ? (
+          <button onClick={updateProduct}>Update Product</button>
+        ) : (
+          <button onClick={addProduct}>Add Product</button>
+        )}
+      </div>
 
-          <input
-            name="description"
-            type="text"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Description"
-          />
-
-          <button onClick={updateProduct}>
-            Update Product
-          </button>
-        </div>
-      )}
-
-      {/* 📦 Product List */}
-      {filteredProducts.length === 0 ? (
-        <p>No products found</p>
+     
+      {products.length === 0 ? (
+        <p>No products available</p>
       ) : (
-        filteredProducts.map((p) => (
-          <div key={p._id} style={{ border: "1px solid black", marginBottom: "10px", padding: "10px" }}>
+        products.map((p) => (
+          <div
+            key={p._id}
+            style={{
+              border: "1px solid black",
+              marginBottom: "10px",
+              padding: "10px",
+            }}
+          >
             <h3>{p.name}</h3>
             <p>Price: {p.price}</p>
             <p>Description: {p.description}</p>
 
-            <button onClick={() => deletefun(p._id)}>
+            <button onClick={() => deleteProduct(p._id)}>
               Delete
             </button>
 
